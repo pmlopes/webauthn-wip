@@ -6,6 +6,26 @@ All users are ephemeral as the data is stored in memory in the class `InMemorySt
 
 # Development
 
+In order to run this app you need a patched vertx-auth and vertx-web with the supporting code:
+
+Download the `vertx-auth/webauthn-wip` breanch and build it locally:
+```
+curl https://github.com/vert-x3/vertx-auth/archive/webauthn-wip.zip
+unzip webauthn-wip.zip
+cd webauthn-wip
+mvn -Dmaven.test.skip=true install
+```
+
+Download the `vertx-web/webauthn` breanch and build it locally:
+```
+curl https://github.com/vert-x3/vertx-web/archive/webauthn.zip
+unzip webauthn.zip
+cd webauthn
+mvn -Dmaven.test.skip=true install
+```
+
+Once these are in your local maven cache you don't need to do the previous steps (unless the branches change).
+
 To test on a local machine there is no need to use SSL, however to connect to the app from a different machine/device the browser credentials API requires an SSL certificate.
 
 To create a self signed key for your IP address do the following:
