@@ -1,114 +1,81 @@
 package com.example.webauthn;
 
-import io.vertx.core.*;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.webauthn.WebAuthN;
 import io.vertx.ext.auth.webauthn.WebAuthNOptions;
-import io.vertx.ext.auth.webauthn.WebAuthNStore;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.*;
-import io.vertx.ext.web.sstore.SessionStore;
-
-import java.util.HashMap;
-import java.util.Map;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.SessionHandler;
+import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.sstore.LocalSessionStore;
+import io.vertx.ext.web.handler.WebAuthNHandler;
 
 public class MainVerticle extends AbstractVerticle {
 
+  public static void main(String[] args) {
+    Vertx.vertx().deployVerticle(new MainVerticle());
+  }
 
   @Override
   public void start() {
 
-    WebAuthN webAuthN = WebAuthN.create(vertx, new WebAuthNOptions().setRealm("Vertx Examples Realm"));
+    final Router app = Router.router(vertx);
+    // serve the SPA
+    app.route()
+      .handler(StaticHandler.create());
+    // create the webauthn security object
+    WebAuthN webAuthN = WebAuthN.create(
+      vertx,
+      new WebAuthNOptions()
+        .setOrigin("https://192.168.178.74.xip.io:8443")
+        .setRealm("Vert.x WebAuthN Demo"),
+      new InMemoryStore());
+    // parse the BODY
+    app.post()
+      .handler(BodyHandler.create());
+    // add a session handler
+    app.route()
+      .handler(SessionHandler
+        .create(LocalSessionStore.create(vertx))
+        .setAuthProvider(webAuthN));
 
-    webAuthN.webAuthNStore(new WebAuthNStore() {
-      final Map<String, JsonObject> database = new HashMap<>();
-      @Override
-      public WebAuthNStore find(String id, Handler<AsyncResult<JsonObject>> handler) {
-        handler.handle(Future.succeededFuture(database.get(id)));
-        return this;
-      }
-      @Override
-      public WebAuthNStore update(String id, JsonObject data, Handler<AsyncResult<JsonObject>> handler) {
-        handler.handle(Future.succeededFuture(database.put(id, data)));
-        return this;
-      }
-    });
+    // security handler
+    WebAuthNHandler webAuthNHandler = WebAuthNHandler.create(webAuthN)
+      // required callback
+      .setupCallback(app.post("/webauthn/response"))
+      // optional register callback
+      .setupCredentialsCreateCallback(app.post("/webauthn/register"))
+      // optional login callback
+      .setupCredentialsGetCallback(app.post("/webauthn/login"));
 
-    WebAuthNHandler webAuthNHandler = WebAuthNHandler.create(webAuthN, "http://localhost:8080");
+    // secure the remaining routes
+    app.route().handler(webAuthNHandler);
 
-
-    final Router router = Router.router(vertx);
-    // I/O requires HTTP posts
-    router.route().handler(BodyHandler.create());
-    // State is stored in the session
-    router.route().handler(CookieHandler.create());
-    router.route().handler(SessionHandler.create(SessionStore.create(vertx)));
-    // We need a user session handler too to make sure
-    // the user is stored in the session between requests
-    router.route()
-      .handler(UserSessionHandler.create(webAuthN));
-
-    // default routes
-
-    /* Returns if user is logged in */
-    router.get("/isLoggedIn").handler(ctx -> {
-      if (ctx.user() == null) {
-        ctx.response()
-          .putHeader("Content-Type", "application/json")
-          .end(new JsonObject().put("status", "failed").encode());
-      } else {
-        ctx.response()
-          .putHeader("Content-Type", "application/json")
-          .end(new JsonObject().put("status", "ok").encode());
-      }
-    });
-
-    /* Logs user out */
-    router.get("/logout").handler(ctx -> {
-      if (ctx.session() != null) {
-        ctx.session().destroy();
-      }
-
-      ctx.response()
-        .putHeader("Content-Type", "application/json")
-        .end(new JsonObject().put("status", "ok").encode());
-    });
-
-    router.post("/webauthn/register").handler(webAuthNHandler.registerHandler());
-    router.post("/webauthn/login").handler(webAuthNHandler.loginHandler());
-    router.post("/webauthn/response").handler(webAuthNHandler);
-
-    // secure the rest
-
-    /* Returns personal info and THE SECRET INFORMATION */
-    router.get("/personalInfo").handler(ctx -> {
-      if (ctx.user() == null) {
-        ctx.response()
-          .putHeader("Content-Type", "application/json")
-          .end(new JsonObject().put("status", "failed").put("message", "Access denied").encode());
-      } else {
-        ctx.response()
-          .putHeader("Content-Type", "application/json")
-          .end(new JsonObject()
-            .put("status", "ok")
-            .put("'name'", ctx.user().principal().getString("name"))
-            .put("theSecret", "<img width=\"250px\" src=\"img/theworstofthesecrets.jpg\">").encode());
-      }
-    });
+    app.route("/protected")
+      .handler(ctx -> {
+        System.out.println("USER: " + ctx.user());
+        ctx.end("Protected resource");
+      });
 
 
-    router.route().handler(StaticHandler.create());
-
-    vertx.createHttpServer().requestHandler(router).listen(8080, res -> {
+    // we need HTTPs to have credentials available
+    vertx.createHttpServer(
+      new HttpServerOptions()
+        .setSsl(true)
+        .setKeyStoreOptions(
+          new JksOptions()
+            .setPath("192.168.178.74.xip.io.jks")
+            .setPassword("passphrase")))
+      .requestHandler(app)
+      .listen(8443, res -> {
       if (res.failed()) {
         res.cause().printStackTrace();
       } else {
-        System.out.println("Server listening at: http://localhost:8080/");
+        System.out.println("Server listening at: https://192.168.178.74.xip.io:8443");
       }
     });
-  }
-
-  public static void main(String[] args) {
-    Vertx.vertx().deployVerticle(new MainVerticle());
   }
 }

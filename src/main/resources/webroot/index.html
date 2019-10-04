@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title></title>
+    <title>Web Authentication API Demo</title>
     <link rel="stylesheet" href="css/milligram.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        html, body, .container, .row {
-            height: 100%;
+        .column {
+            height: 350px;
+        }
+        .row {
+            margin-top: 50px;
+            margin-bottom: 50px;
         }
 
         .formcontainer {
@@ -22,30 +27,40 @@
             padding: 15px;
         }
 
-        #registerContainer, #mainContainer {
-            display: none;
+        .alert {
+            padding: 20px;
+            color: white;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+        .alert.info {
+            background: #2196F3;
+        }
+        .alert.success {
+            background-color: #4CAF50;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row row-center">
+    <div class="alert info" style="display: none;" id="touch-alert"><strong>Touch</strong> your Authentication device</div>
+    <div class="alert success" style="display: none;" id="register-success-alert"><strong>Registration</strong> completed</div>
+    <div class="alert success" style="display: none;" id="login-success-alert"><strong>Login</strong> success</div>
 
+    <div class="container">
+        <div class="row"><h1>Web Authentication API Demo</h1></div>
+        <div class="row row-center">
             <div class="column" id="registerContainer">
                 <div class="formcontainer register">
                     <h3>Register page</h3>
                     <form id="register">
                       <fieldset>
-                        <label for="name">name</label>
-                        <input type="text" name="name">
                         <label for="username">username</label>
                         <input type="text" name="username">
-
+                        <span id="platform-support" style="display: none;"><input type="radio" name="type" value="platform"> Platform (Finger print, Machine authn)<br></span>
+                        <input type="radio" name="type" value="cross-platform" checked="checked"> Cross Platform (Security key)<br>
                         <input class="button-primary" type="submit" value="Register">
                       </fieldset>
                     </form>
-
-                    <a href="#" id="toLogin">Already registered? Login page</a>
                 </div>
             </div>
 
@@ -56,41 +71,23 @@
                       <fieldset>
                         <label for="username">username</label>
                         <input type="text" name="username">
-
                         <input class="button-primary" type="submit" value="Login">
                       </fieldset>
                     </form>
-
-                    <a href="#" id="toRegistration">Not registered yet? Registration</a>
                 </div>
             </div>
-
-            <div class="column" id="mainContainer">
-
-                <div class="secretcontainer">
-                    <h3>Hey <span id="name"></span>!</h3>
-                    <div id="theSecret"></div>
-                    <button id="logoutButton">Logout</button>
-                </div>
-            </div>
-
         </div>
     </div>
-
-    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/helpers.js"></script>
     <script src="js/base64url-arraybuffer.js"></script>
-    <script src="js/view.js"></script>
-    <script src="js/utils.js"></script>
     <script src="js/webauthn.auth.js"></script>
     <script>
-        $(document).ready(function () {
-            checkIfLoggedIn()
-            .then(function (response) {
-                if(response) {
-                  return loadMainContainer()
-                }
-            })
-        })
+    document.addEventListener('DOMContentLoaded', async function () {
+        let platformAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (platformAvailable) {
+            document.getElementById('platform-support').style.display = 'block'
+        }
+    })
     </script>
 </body>
 </html>
