@@ -4,6 +4,8 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
+import io.vertx.ext.auth.webauthn.AuthenticatorAttachment;
+import io.vertx.ext.auth.webauthn.UserVerification;
 import io.vertx.ext.auth.webauthn.WebAuthN;
 import io.vertx.ext.auth.webauthn.WebAuthNOptions;
 import io.vertx.ext.web.Router;
@@ -31,8 +33,17 @@ public class MainVerticle extends AbstractVerticle {
       vertx,
       new WebAuthNOptions()
         .setOrigin("https://192.168.178.74.xip.io:8443")
-        .setRealm("Vert.x WebAuthN Demo"),
-      new InMemoryStore());
+        .setRpName("Vert.x WebAuthN Demo")
+        // What kind of authentication do you want? do you care? if you care you can specify it
+        // # security keys
+        .setAuthenticatorAttachment(AuthenticatorAttachment.CROSS_PLATFORM)
+        .setRequireResidentKey(false)
+        // # fingerprint
+//        .setAuthenticatorAttachment(AuthenticatorAttachment.PLATFORM)
+//        .setRequireResidentKey(false)
+//        .setUserVerification(UserVerification.REQUIRED)
+        ,
+      new InMemmoryStore());
     // parse the BODY
     app.post()
       .handler(BodyHandler.create());
