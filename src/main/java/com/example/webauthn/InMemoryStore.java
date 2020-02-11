@@ -4,13 +4,13 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AuthStore;
+import io.vertx.ext.auth.webauthn.CredentialStore;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class InMemoryStore implements AuthStore {
+public class InMemoryStore implements CredentialStore {
 
   public static class StoreEntry {
     String username;
@@ -61,12 +61,17 @@ public class InMemoryStore implements AuthStore {
               .put("publicKey", publicKey)
               .put("counter", counter);
     }
+
+    @Override
+    public String toString() {
+      return toJson().encodePrettily();
+    }
   }
 
   private final List<StoreEntry> database = new ArrayList<>();
 
   @Override
-  public AuthStore getUserCredentialsByName(String username, Handler<AsyncResult<List<JsonObject>>> handler) {
+  public CredentialStore getUserCredentialsByName(String username, Handler<AsyncResult<List<JsonObject>>> handler) {
 
     handler.handle(Future.succeededFuture(
             database.stream()
@@ -79,7 +84,7 @@ public class InMemoryStore implements AuthStore {
   }
 
   @Override
-  public AuthStore getUserCredentialsById(String id, Handler<AsyncResult<List<JsonObject>>> handler) {
+  public CredentialStore getUserCredentialsById(String id, Handler<AsyncResult<List<JsonObject>>> handler) {
     handler.handle(Future.succeededFuture(
             database.stream()
                     .filter(entry -> id.equals(entry.credID))
@@ -91,7 +96,7 @@ public class InMemoryStore implements AuthStore {
   }
 
   @Override
-  public AuthStore updateUserCredential(String id, JsonObject data, boolean upsert, Handler<AsyncResult<Void>> handler) {
+  public CredentialStore updateUserCredential(String id, JsonObject data, boolean upsert, Handler<AsyncResult<Void>> handler) {
 
     long updated = database.stream()
             .filter(entry -> id.equals(entry.credID))
@@ -118,5 +123,18 @@ public class InMemoryStore implements AuthStore {
       }
     }
     return this;
+  }
+
+  @Override
+  public String toString() {
+    StringBuffer sb = new StringBuffer();
+    sb.append("[\n");
+    for (StoreEntry entry : database) {
+      sb.append(entry.toString());
+      sb.append(",\n");
+    }
+    sb.append("]");
+
+    return sb.toString();
   }
 }

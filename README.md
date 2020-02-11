@@ -6,21 +6,21 @@ All users are ephemeral as the data is stored in memory in the class `InMemorySt
 
 # Development
 
-In order to run this app you need a patched vertx-auth and vertx-web with the supporting code:
+In order to run this app you need `vertx-auth` and `vertx-web` from the master branch.
 
-Download the `vertx-auth/webauthn-wip` breanch and build it locally:
+Download the `vertx-auth/master` branch and build it locally:
 ```
-curl https://github.com/vert-x3/vertx-auth/archive/webauthn-wip.zip
-unzip webauthn-wip.zip
-cd webauthn-wip
+curl https://github.com/vert-x3/vertx-auth/archive/master.zip
+unzip master.zip
+cd master
 mvn -Dmaven.test.skip=true install
 ```
 
-Download the `vertx-web/webauthn` breanch and build it locally:
+Download the `vertx-web/master` branch and build it locally:
 ```
-curl https://github.com/vert-x3/vertx-web/archive/webauthn.zip
-unzip webauthn.zip
-cd webauthn
+curl https://github.com/vert-x3/vertx-web/archive/master.zip
+unzip master.zip
+cd master
 mvn -Dmaven.test.skip=true install
 ```
 
