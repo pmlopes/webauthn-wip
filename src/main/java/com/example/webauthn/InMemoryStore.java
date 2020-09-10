@@ -3,138 +3,61 @@ package com.example.webauthn;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.webauthn.CredentialStore;
+import io.vertx.ext.auth.webauthn.store.Authenticator;
+import io.vertx.ext.auth.webauthn.store.AuthenticatorStore;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class InMemoryStore implements CredentialStore {
+public class InMemoryStore implements AuthenticatorStore {
 
-  public static class StoreEntry {
-    String username;
+  private final List<Authenticator> database;
 
-    String credID;
-    String publicKey;
-    long counter;
-
-    public String getUsername() {
-      return username;
-    }
-
-    public StoreEntry setUsername(String username) {
-      this.username = username;
-      return this;
-    }
-
-    public String getCredID() {
-      return credID;
-    }
-
-    public StoreEntry setCredID(String credID) {
-      this.credID = credID;
-      return this;
-    }
-
-    public String getPublicKey() {
-      return publicKey;
-    }
-
-    public StoreEntry setPublicKey(String publicKey) {
-      this.publicKey = publicKey;
-      return this;
-    }
-
-    public long getCounter() {
-      return counter;
-    }
-
-    public StoreEntry setCounter(long counter) {
-      this.counter = counter;
-      return this;
-    }
-
-    JsonObject toJson() {
-      return new JsonObject()
-              .put("credID", credID)
-              .put("publicKey", publicKey)
-              .put("counter", counter);
-    }
-
-    @Override
-    public String toString() {
-      return toJson().encodePrettily();
-    }
+  public InMemoryStore() {
+    database = new ArrayList<>();
   }
 
-  private final List<StoreEntry> database = new ArrayList<>();
-
   @Override
-  public CredentialStore getUserCredentialsByName(String username, Handler<AsyncResult<List<JsonObject>>> handler) {
-
+  public AuthenticatorStore getAuthenticatorsByUserName(String name, Handler<AsyncResult<List<Authenticator>>> handler) {
     handler.handle(Future.succeededFuture(
-            database.stream()
-                    .filter(entry -> username.equals(entry.username))
-                    .map(StoreEntry::toJson)
-                    .collect(Collectors.toList())
+      database.stream()
+        .filter(entry -> name.equals(entry.getUserName()))
+        .collect(Collectors.toList())
     ));
-
     return this;
   }
 
   @Override
-  public CredentialStore getUserCredentialsById(String id, Handler<AsyncResult<List<JsonObject>>> handler) {
+  public AuthenticatorStore getAuthenticatorsByCredId(String credId, Handler<AsyncResult<List<Authenticator>>> handler) {
     handler.handle(Future.succeededFuture(
-            database.stream()
-                    .filter(entry -> id.equals(entry.credID))
-                    .map(StoreEntry::toJson)
-                    .collect(Collectors.toList())
+      database.stream()
+        .filter(entry -> credId.equals(entry.getCredID()))
+        .collect(Collectors.toList())
     ));
-
     return this;
   }
 
   @Override
-  public CredentialStore updateUserCredential(String id, JsonObject data, boolean upsert, Handler<AsyncResult<Void>> handler) {
+  public AuthenticatorStore update(Authenticator authenticator, boolean upsert, Handler<AsyncResult<Void>> handler) {
 
     long updated = database.stream()
-            .filter(entry -> id.equals(entry.credID))
-            .peek(entry -> {
-              // update existing credential
-              entry.publicKey = data.getString("publicKey");
-              entry.counter = data.getLong("counter", 0L);
-            }).count();
+      .filter(entry -> authenticator.getCredID().equals(entry.getCredID()))
+      .peek(entry -> {
+        // update existing counter
+        entry.setCounter(authenticator.getCounter());
+      }).count();
 
     if (updated > 0) {
       handler.handle(Future.succeededFuture());
     } else {
       if (upsert) {
-        database.add(
-                new StoreEntry()
-                        .setUsername(data.getString("username"))
-                        .setCredID(data.getString("credID"))
-                        .setPublicKey(data.getString("publicKey"))
-                        .setCounter(data.getLong("counter", 0L))
-        );
+        database.add(authenticator);
         handler.handle(Future.succeededFuture());
       } else {
         handler.handle(Future.failedFuture("Nothing updated!"));
       }
     }
     return this;
-  }
-
-  @Override
-  public String toString() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("[\n");
-    for (StoreEntry entry : database) {
-      sb.append(entry.toString());
-      sb.append(",\n");
-    }
-    sb.append("]");
-
-    return sb.toString();
   }
 }

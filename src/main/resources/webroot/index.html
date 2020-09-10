@@ -1,80 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Web Authentication API Demo</title>
-    <link rel="stylesheet" href="css/milligram.min.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        .column {
-            height: 350px;
-        }
-        .row {
-            margin-top: 50px;
-            margin-bottom: 50px;
-        }
-
-        .alert {
-            padding: 20px;
-            color: white;
-            margin-bottom: 15px;
-            border-radius: 4px;
-        }
-        .alert.info {
-            background: #2196F3;
-        }
-        .alert.success {
-            background-color: #4CAF50;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <title>WebAuthn</title>
 </head>
 <body>
-    <div class="alert info" style="display: none;" id="touch-alert"><strong>Touch</strong> your Authentication device</div>
-    <div class="alert success" style="display: none;" id="register-success-alert"><strong>Registration</strong> completed</div>
-    <div class="alert success" style="display: none;" id="login-success-alert"><strong>Login</strong> success</div>
+<noscript>You need to enable JavaScript to run this app.</noscript>
 
-    <div class="container">
-        <div><h1>Web Authentication API Demo</h1></div>
-        <div class="row">
+<div id="message"></div>
 
-            <div class="column" id="registerContainer">
-                <div class="register">
-                    <h3>Register page</h3>
-                    <form id="register">
-                      <fieldset>
-                        <label for="username">username</label>
-                        <input type="text" name="username">
-                        <span id="platform-support" style="display: none;"><input type="radio" name="type" value="platform"> Platform (Finger print, Machine authn)<br></span>
-                        <input type="radio" name="type" value="cross-platform" checked="checked"> Cross Platform (Security key)<br>
-                        <input class="button-primary" type="submit" value="Register">
-                      </fieldset>
-                    </form>
-                </div>
-            </div>
+<button id="register">register</button>
+<button id="login">login</button>
 
-            <div class="column" id="loginContainer">
-                <div class="login">
-                    <h3>Login page</h3>
-                    <form id="login">
-                      <fieldset>
-                        <label for="username">username</label>
-                        <input type="text" name="username">
-                        <input class="button-primary" type="submit" value="Login">
-                      </fieldset>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="js/helpers.js"></script>
-    <script src="js/base64url-arraybuffer.js"></script>
-    <script src="js/webauthn.auth.js"></script>
-    <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-        let platformAvailable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        if (platformAvailable) {
-            document.getElementById('platform-support').style.display = 'block'
-        }
-    })
-    </script>
+<div>
+  <a href="/protected">Want some secret info?</a>
+</div>
+
+<script src="vertx-auth-webauthn-client.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
