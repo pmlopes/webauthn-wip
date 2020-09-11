@@ -1,7 +1,6 @@
 package com.example.webauthn;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.webauthn.RelyingParty;
@@ -16,12 +15,11 @@ import io.vertx.ext.web.sstore.LocalSessionStore;
 
 public class MainVerticle extends AbstractVerticle {
 
-  public static void main(String[] args) {
-    Vertx.vertx().deployVerticle(new MainVerticle());
-  }
-
   @Override
   public void start() {
+    // Dummy database, real world workloads
+    // use a persistent store or course!
+    InMemoryStore database = new InMemoryStore();
 
     final Router app = Router.router(vertx);
     // serve the SPA
@@ -34,7 +32,8 @@ public class MainVerticle extends AbstractVerticle {
         .setRelyingParty(
           new RelyingParty().setName("Vert.x WebAuthN Demo")))
       // where to load/update authenticators data
-      .setAuthenticatorStore(new InMemoryStore());
+      .authenticatorFetcher(database::fetcher)
+      .authenticatorUpdater(database::updater);
 
     // parse the BODY
     app.post()

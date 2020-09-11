@@ -1,23 +1,29 @@
 package com.example.webauthn;
 
 import io.vertx.core.Future;
-import io.vertx.ext.auth.webauthn.store.Authenticator;
-import io.vertx.ext.auth.webauthn.store.AuthenticatorStore;
+import io.vertx.ext.auth.webauthn.Authenticator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class InMemoryStore implements AuthenticatorStore {
+public class InMemoryStore {
 
-  private final List<Authenticator> database;
+  /**
+   * This is a dummy database, just for demo purposes.
+   * In a real world scenario you should be using something like:
+   *
+   * <ul>
+   *   <li>Postgres</li>
+   *   <li>MySQL</li>
+   *   <li>Mongo</li>
+   *   <li>Redis</li>
+   *   <li>...</li>
+   * </ul>
+   */
+  private final List<Authenticator> database = new ArrayList<>();
 
-  public InMemoryStore() {
-    database = new ArrayList<>();
-  }
-
-  @Override
-  public Future<List<Authenticator>> fetch(Authenticator query) {
+  public Future<List<Authenticator>> fetcher(Authenticator query) {
     return Future.succeededFuture(
       database.stream()
         .filter(entry -> {
@@ -34,8 +40,7 @@ public class InMemoryStore implements AuthenticatorStore {
     );
   }
 
-  @Override
-  public Future<Void> store(Authenticator authenticator) {
+  public Future<Void> updater(Authenticator authenticator) {
 
     long updated = database.stream()
       .filter(entry -> authenticator.getCredID().equals(entry.getCredID()))
