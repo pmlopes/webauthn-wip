@@ -6,26 +6,6 @@ All users are ephemeral as the data is stored in memory in the class `InMemorySt
 
 # Development
 
-In order to run this app you need `vertx-auth` and `vertx-web` from the master branch.
-
-Download the `vertx-auth/master` branch and build it locally:
-```
-curl https://github.com/vert-x3/vertx-auth/archive/master.zip
-unzip master.zip
-cd master
-mvn -Dmaven.test.skip=true install
-```
-
-Download the `vertx-web/master` branch and build it locally:
-```
-curl https://github.com/vert-x3/vertx-web/archive/master.zip
-unzip master.zip
-cd master
-mvn -Dmaven.test.skip=true install
-```
-
-Once these are in your local maven cache you don't need to do the previous steps (unless the branches change).
-
 To test on a local machine there is no need to use SSL, however to connect to the app from a different machine/device the browser credentials API requires an SSL certificate.
 
 To create a self signed key for your IP address do the following:
