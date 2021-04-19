@@ -40,5 +40,7 @@ docker run \
 
 ## The base config
 
+See the [config.json](config.json)
+
 Remember this is a self signed certificate so it will cause warnings all over, if you want to test it fully you need a
 verified certificate perhaps using: https://letsencrypt.org .
