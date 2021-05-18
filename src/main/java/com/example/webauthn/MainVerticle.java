@@ -5,7 +5,6 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.file.FileSystem;
-import io.vertx.core.file.FileSystemException;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
@@ -25,14 +24,6 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(Promise<Void> start) {
-
-    final String origin = config().getString("origin");
-    final boolean ssl = config().getBoolean("ssl", false);
-
-    if (origin == null) {
-      start.fail("Missing origin config");
-      return;
-    }
 
     final FileSystem fs = vertx.fileSystem();
 
@@ -74,9 +65,6 @@ public class MainVerticle extends AbstractVerticle {
       .onFailure(start::fail)
       .onSuccess(done -> {
         final Router app = Router.router(vertx);
-        // serve the SPA
-        app.route()
-          .handler(StaticHandler.create());
         // parse the BODY
         app.post()
           .handler(BodyHandler.create());
@@ -87,7 +75,7 @@ public class MainVerticle extends AbstractVerticle {
 
         // security handler
         WebAuthnHandler webAuthnHandler = WebAuthnHandler.create(webAuthN)
-          .setOrigin(origin)
+          .setOrigin(String.format("https://%s.nip.io:8443", System.getenv("IP")))
           // required callback
           .setupCallback(app.post("/webauthn/callback"))
           // optional register callback
@@ -96,44 +84,26 @@ public class MainVerticle extends AbstractVerticle {
           .setupCredentialsGetCallback(app.post("/webauthn/login"));
 
         // secure the remaining routes
-        app.route().handler(webAuthnHandler);
+        app.route("/protected/*").handler(webAuthnHandler);
 
-        app.route("/protected")
-          .handler(ctx -> {
-            ctx.response()
-              .putHeader("Content-Type", "text/plain; charset=UTF-8")
-              .end(
-                "▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n" +
-                  "█░░░░░░░░▀█▄▀▄▀██████░▀█▄▀▄▀██████\n" +
-                  "░░░░ ░░░░░░░▀█▄█▄███▀░░░ ▀█▄█▄███\n" +
-                  "\n" +
-                  "FIDO2 is Awesome!\n" +
-                  "No Password phishing here!\n");
-          });
+        // serve the SPA
+        app.route()
+          .handler(StaticHandler.create());
 
         vertx.createHttpServer(
-          ssl ?
-            new HttpServerOptions()
-              .setSsl(true)
-              .setKeyStoreOptions(
-                new JksOptions(config().getJsonObject("keystore"))) :
-            new HttpServerOptions())
+          new HttpServerOptions()
+            .setSsl(true)
+            .setKeyStoreOptions(
+              new JksOptions()
+                .setPath("cert-store.jks")
+                .setPassword(System.getenv("CERTSTORE_SECRET"))))
+
           .requestHandler(app)
-          .listen(config().getInteger("port"), "0.0.0.0")
+          .listen(8443, "0.0.0.0")
+          .onFailure(start::fail)
           .onSuccess(v -> {
-            System.out.println("Server listening at: " + origin);
+            System.out.printf("Server listening at: https://%s.nip.io:8443%n", System.getenv("IP"));
             start.complete();
-          })
-          .onFailure(err -> {
-            if (err.getCause() instanceof FileSystemException) {
-              System.err.println("Error reading the keystore, to create one do the following:");
-              System.err.println("# replace the CN with your own IP address (other than localhost) with suffix .xip.io");
-              System.err.println("keytool -genkeypair -alias rsakey -keyalg rsa -storepass password -keystore server.jks -storetype JKS -dname \"CN=192.168.178.74.xip.io,O=Vert.x Demo Server\"");
-              System.err.println("# convert to PKCS#12 format for compatibility reasons");
-              System.err.println("keytool -importkeystore -srckeystore server.jks -destkeystore server.jks -deststoretype pkcs12");
-              System.err.println("# your new ssl certificate is on the file `server.jks`");
-            }
-            start.fail(err);
           });
       });
   }

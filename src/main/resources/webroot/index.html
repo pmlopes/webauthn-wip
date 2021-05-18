@@ -1,29 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>WebAuthn</title>
+  <meta charset="UTF-8">
+  <title>FIDO2 Vert.x Server Demo</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <noscript>You need to enable JavaScript to run this app.</noscript>
-
-<div id="message"></div>
-
-<button id="register">register</button>
-<button id="login">login</button>
-
-<hr>
-
-<div>
-  <a href="/protected">Want some secret info?</a>
+<div class="container">
+  <input type="radio" name="tab" id="signin" checked="checked"/>
+  <input type="radio" name="tab" id="register"/>
+  <div class="pages">
+    <div class="page">
+      <div class="input">
+        <div class="title">EMAIL</div>
+        <input class="text" type="email" id="login-name" placeholder=""/>
+      </div>
+      <div class="input">
+        <input type="button" id="loginButton" value="ENTER"/>
+      </div>
+    </div>
+    <div class="page signup">
+      <div class="input">
+        <div class="title">NAME</div>
+        <input class="text" type="text" id="register-display-name" placeholder=""/>
+      </div>
+      <div class="input">
+        <div class="title">EMAIL</div>
+        <input class="text" type="email" id="register-name" placeholder=""/>
+      </div>
+      <div class="input">
+        <input type="button" id="registerButton" value="SIGN ME UP!"/>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <label class="tab" for="signin">
+      <div class="text">Sign In</div>
+    </label>
+    <label class="tab" for="register">
+      <div class="text">Register</div>
+    </label>
+  </div>
 </div>
-
-<hr>
-
-View source for details
+<div class="display" id="errorArea"></div>
 
 <script src="vertx-auth-webauthn-client.js"></script>
-<script src="main.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
