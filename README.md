@@ -44,6 +44,18 @@ docker run \
   webauthn:4.0.3
 ```
 
+Optionally custom metadata statements can be mounted into the container, to avoid calling the MDS server:
+
+```bash
+docker run \
+  --rm \
+  --net host \
+  -v $(pwd)/config.json:/vertx/config.json \
+-v $(pwd)/metadataStatements:/vertx/metadataStatements \
+  webauthn:4.0.3
+```
+
+
 ## The base config
 
 See the [config.json](config.json)
