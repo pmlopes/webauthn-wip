@@ -6,11 +6,10 @@ RUN mvn package -q
 
 FROM adoptopenjdk:16-jre-hotspot
 WORKDIR /vertx
-ARG VERSION=4.0.3
 ARG IP
 ARG CERTSTORE_SECRET
 
-COPY --from=maven /vertx/target/webauthn-${VERSION}.jar /vertx/webauthn-vertx-server.jar
+COPY --from=maven /vertx/target/webauthn-*.jar /vertx/webauthn-vertx-server.jar
 
 EXPOSE $PORT
 

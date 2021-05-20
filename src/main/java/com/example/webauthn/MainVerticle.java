@@ -5,16 +5,14 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.file.FileSystem;
+import io.vertx.core.http.CookieSameSite;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.auth.webauthn.WebAuthn;
 import io.vertx.ext.auth.webauthn.WebAuthnOptions;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.SessionHandler;
-import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.web.handler.WebAuthnHandler;
+import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 
 import java.util.ArrayList;
@@ -68,10 +66,14 @@ public class MainVerticle extends AbstractVerticle {
         // parse the BODY
         app.post()
           .handler(BodyHandler.create());
+        // favicon
+        app.route()
+          .handler(FaviconHandler.create(vertx));
         // add a session handler
         app.route()
           .handler(SessionHandler
-            .create(LocalSessionStore.create(vertx)));
+            .create(LocalSessionStore.create(vertx))
+            .setCookieSameSite(CookieSameSite.STRICT));
 
         // security handler
         WebAuthnHandler webAuthnHandler = WebAuthnHandler.create(webAuthN)
